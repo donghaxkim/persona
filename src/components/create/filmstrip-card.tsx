@@ -44,7 +44,7 @@ export function FilmstripCard({
       <button
         onClick={onClick}
         className={cn(
-          "relative w-[100px] h-[64px] rounded-xl overflow-hidden transition-all duration-200 group cursor-pointer",
+          "relative w-[80px] h-[52px] rounded-xl overflow-hidden transition-all duration-200 group cursor-pointer",
           isActive && "filmstrip-card-active ring-glow",
           isEmpty && "filmstrip-placeholder",
           isCompleted && "glass-card",

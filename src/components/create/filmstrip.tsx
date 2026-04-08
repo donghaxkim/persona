@@ -42,7 +42,8 @@ export function Filmstrip({ pipeline }: FilmstripProps) {
   };
 
   return (
-    <div className="glass flex-shrink-0 mx-4 mt-3 rounded-2xl px-4 py-3">
+    <div className="flex-shrink-0 max-w-[600px] mx-auto w-full px-6 mt-3">
+    <div className="glass w-full flex justify-center rounded-2xl px-4 py-3">
       <div className="flex items-center justify-center gap-0">
         {steps.map((step, i) => (
           <div key={step} className="flex items-center">
@@ -55,17 +56,18 @@ export function Filmstrip({ pipeline }: FilmstripProps) {
               onUpload={(file) => injectAsset(step, file)}
             />
             {i < steps.length - 1 && (
-              <div className="flex items-center mx-1.5">
+              <div className="flex items-center mx-1">
                 <div className={
                   pipeline.steps[step].status === "confirmed"
-                    ? "w-5 h-[1.5px] bg-foreground/20 rounded-full"
-                    : "w-5 h-[1.5px] bg-foreground/8 rounded-full"
+                    ? "w-3 h-[1.5px] bg-foreground/20 rounded-full"
+                    : "w-3 h-[1.5px] bg-foreground/8 rounded-full"
                 } />
               </div>
             )}
           </div>
         ))}
       </div>
+    </div>
     </div>
   );
 }

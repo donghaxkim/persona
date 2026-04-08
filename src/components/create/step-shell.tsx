@@ -13,7 +13,7 @@ export function StepShell({ step, children }: StepShellProps) {
   const meta = PIPELINE_STEPS.find((s) => s.step === step)!;
 
   return (
-    <div className="max-w-[560px] mx-auto px-4 py-5 animate-slide-up">
+    <div className="max-w-[600px] mx-auto px-6 py-5 animate-slide-up">
       {/* Step header */}
       <div className="mb-5">
         <div className="flex items-baseline gap-2">
