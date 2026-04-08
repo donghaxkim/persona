@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { api } from "./api";
 import type {
   Influencer,
   ReferenceImage,
@@ -11,8 +11,6 @@ import type {
   PipelineState,
   PipelineStep,
   StepStatus,
-  GeneratedFace,
-  ReferenceGrid,
   ReferenceVideo,
   CompositeResult,
   AnimationResult,
@@ -29,11 +27,9 @@ function createEmptyPipeline(): PipelineState {
   return {
     activeStep: 1,
     steps: {
-      1: { status: "empty", options: [], selected: null },
-      2: { status: "empty", grid: null, confirmed: false },
-      3: { status: "empty", video: null },
-      4: { status: "empty", options: [], selected: null },
-      5: { status: "empty", result: null, retryCount: 0 },
+      1: { status: "empty", video: null },
+      2: { status: "empty", options: [], selected: null },
+      3: { status: "empty", result: null, retryCount: 0 },
     },
   };
 }
@@ -52,10 +48,6 @@ interface PersonaStore {
   clearPipeline: () => void;
   setActiveStep: (step: PipelineStep) => void;
   updateStepStatus: (step: PipelineStep, status: StepStatus) => void;
-  setStepOptions: (step: 1, options: GeneratedFace[]) => void;
-  selectFace: (face: GeneratedFace) => void;
-  setReferenceGrid: (grid: ReferenceGrid) => void;
-  confirmGrid: () => void;
   setReferenceVideo: (video: ReferenceVideo) => void;
   setCompositeOptions: (options: CompositeResult[]) => void;
   selectComposite: (composite: CompositeResult) => void;
@@ -101,9 +93,7 @@ interface PersonaStore {
   setActiveGeneration: (gen: ActiveGeneration | null) => void;
 }
 
-export const usePersonaStore = create<PersonaStore>()(
-  persist(
-    (set) => ({
+export const usePersonaStore = create<PersonaStore>()((set) => ({
       influencers: [],
       rosterOrder: [],
       folders: [],
@@ -112,7 +102,7 @@ export const usePersonaStore = create<PersonaStore>()(
       activeGeneration: null,
       pipeline: null,
 
-      // ── Pipeline actions ────────────────────────────────────
+      // ── Pipeline actions (3-step: Motion → Composite → Animate) ──
       initPipeline: () => set({ pipeline: createEmptyPipeline() }),
       clearPipeline: () => set({ pipeline: null }),
 
@@ -131,51 +121,19 @@ export const usePersonaStore = create<PersonaStore>()(
           return { pipeline: { ...state.pipeline, steps } };
         }),
 
-      setStepOptions: (_step, options) =>
-        set((state) => {
-          if (!state.pipeline) return state;
-          const steps = { ...state.pipeline.steps };
-          steps[1] = { ...steps[1], options, status: "selecting" };
-          return { pipeline: { ...state.pipeline, steps } };
-        }),
-
-      selectFace: (face) =>
-        set((state) => {
-          if (!state.pipeline) return state;
-          const steps = { ...state.pipeline.steps };
-          steps[1] = { ...steps[1], selected: face, status: "confirmed" };
-          return { pipeline: { ...state.pipeline, steps, activeStep: 2 } };
-        }),
-
-      setReferenceGrid: (grid) =>
-        set((state) => {
-          if (!state.pipeline) return state;
-          const steps = { ...state.pipeline.steps };
-          steps[2] = { ...steps[2], grid, status: "selecting" };
-          return { pipeline: { ...state.pipeline, steps } };
-        }),
-
-      confirmGrid: () =>
-        set((state) => {
-          if (!state.pipeline) return state;
-          const steps = { ...state.pipeline.steps };
-          steps[2] = { ...steps[2], confirmed: true, status: "confirmed" };
-          return { pipeline: { ...state.pipeline, steps, activeStep: 3 } };
-        }),
-
       setReferenceVideo: (video) =>
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[3] = { ...steps[3], video, status: "confirmed" };
-          return { pipeline: { ...state.pipeline, steps, activeStep: 4 } };
+          steps[1] = { ...steps[1], video, status: "confirmed" };
+          return { pipeline: { ...state.pipeline, steps, activeStep: 2 } };
         }),
 
       setCompositeOptions: (options) =>
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[4] = { ...steps[4], options, status: "selecting" };
+          steps[2] = { ...steps[2], options, status: "selecting" };
           return { pipeline: { ...state.pipeline, steps } };
         }),
 
@@ -183,15 +141,15 @@ export const usePersonaStore = create<PersonaStore>()(
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[4] = { ...steps[4], selected: composite, status: "confirmed" };
-          return { pipeline: { ...state.pipeline, steps, activeStep: 5 } };
+          steps[2] = { ...steps[2], selected: composite, status: "confirmed" };
+          return { pipeline: { ...state.pipeline, steps, activeStep: 3 } };
         }),
 
       setAnimationResult: (result) =>
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[5] = { ...steps[5], result, status: "confirmed" };
+          steps[3] = { ...steps[3], result, status: "confirmed" };
           return { pipeline: { ...state.pipeline, steps } };
         }),
 
@@ -199,20 +157,16 @@ export const usePersonaStore = create<PersonaStore>()(
         set((state) => {
           if (!state.pipeline) return state;
           const current = state.pipeline.activeStep;
-          // Going forward: only if current step is confirmed
           if (step > current && state.pipeline.steps[current].status !== "confirmed") {
             return state;
           }
           const steps = { ...state.pipeline.steps };
-          // Going backward: reset all downstream steps
           if (step < current) {
-            for (let s = step + 1; s <= 5; s++) {
+            for (let s = step + 1; s <= 3; s++) {
               const k = s as PipelineStep;
-              if (k === 1) steps[1] = { status: "empty", options: [], selected: null };
-              else if (k === 2) steps[2] = { status: "empty", grid: null, confirmed: false };
-              else if (k === 3) steps[3] = { status: "empty", video: null };
-              else if (k === 4) steps[4] = { status: "empty", options: [], selected: null };
-              else if (k === 5) steps[5] = { status: "empty", result: null, retryCount: 0 };
+              if (k === 1) steps[1] = { status: "empty", video: null };
+              else if (k === 2) steps[2] = { status: "empty", options: [], selected: null };
+              else if (k === 3) steps[3] = { status: "empty", result: null, retryCount: 0 };
             }
           }
           return { pipeline: { ...state.pipeline, steps, activeStep: step } };
@@ -222,7 +176,6 @@ export const usePersonaStore = create<PersonaStore>()(
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          // Mark steps before as confirmed with placeholder data
           for (let s = 1; s < step; s++) {
             const k = s as PipelineStep;
             if (steps[k].status !== "confirmed") {
@@ -230,14 +183,11 @@ export const usePersonaStore = create<PersonaStore>()(
               (steps as any)[k] = { ...(steps as any)[k], status: "confirmed" };
             }
           }
-          // Reset steps after
-          for (let s = step + 1; s <= 5; s++) {
+          for (let s = step + 1; s <= 3; s++) {
             const k = s as PipelineStep;
-            if (k === 1) steps[1] = { status: "empty", options: [], selected: null };
-            else if (k === 2) steps[2] = { status: "empty", grid: null, confirmed: false };
-            else if (k === 3) steps[3] = { status: "empty", video: null };
-            else if (k === 4) steps[4] = { status: "empty", options: [], selected: null };
-            else if (k === 5) steps[5] = { status: "empty", result: null, retryCount: 0 };
+            if (k === 1) steps[1] = { status: "empty", video: null };
+            else if (k === 2) steps[2] = { status: "empty", options: [], selected: null };
+            else if (k === 3) steps[3] = { status: "empty", result: null, retryCount: 0 };
           }
           return { pipeline: { ...state.pipeline, steps, activeStep: step } };
         }),
@@ -267,9 +217,12 @@ export const usePersonaStore = create<PersonaStore>()(
           activeInfluencerId: id,
           activeView: "references",
         }));
+        api.influencers.create(name, niche).catch((err) => {
+          console.error("Failed to create influencer on server:", err);
+        });
       },
 
-      deleteInfluencer: (id) =>
+      deleteInfluencer: (id) => {
         set((state) => ({
           influencers: state.influencers.filter((i) => i.id !== id),
           rosterOrder: state.rosterOrder.filter(
@@ -281,14 +234,22 @@ export const usePersonaStore = create<PersonaStore>()(
           })),
           activeInfluencerId:
             state.activeInfluencerId === id ? null : state.activeInfluencerId,
-        })),
+        }));
+        api.influencers.delete(id).catch((err) => {
+          console.error("Failed to delete influencer on server:", err);
+        });
+      },
 
-      updateInfluencer: (id, patch) =>
+      updateInfluencer: (id, patch) => {
         set((state) => ({
           influencers: state.influencers.map((i) =>
             i.id === id ? { ...i, ...patch } : i
           ),
-        })),
+        }));
+        api.influencers.update(id, patch).catch((err) => {
+          console.error("Failed to update influencer on server:", err);
+        });
+      },
 
       setActiveInfluencer: (id) =>
         set({ activeInfluencerId: id, activeView: "profile", pipeline: null }),
@@ -500,14 +461,4 @@ export const usePersonaStore = create<PersonaStore>()(
         })),
 
       setActiveGeneration: (gen) => set({ activeGeneration: gen }),
-    }),
-    {
-      name: "persona-store",
-      partialize: (state) => ({
-        influencers: state.influencers,
-        rosterOrder: state.rosterOrder,
-        folders: state.folders,
-      }),
-    }
-  )
-);
+    }));
