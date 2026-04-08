@@ -4,7 +4,7 @@ import { usePersonaStore } from "@/lib/store";
 import { EmptyState } from "./empty-state";
 import { ProfileView } from "./profile-view";
 import { UploadView } from "./upload-view";
-import { GenerateView } from "./generate-view";
+import { CreateView } from "../create/create-view";
 import { AnalyticsView } from "./analytics-view";
 
 export function WorkspaceRouter() {
@@ -23,8 +23,8 @@ export function WorkspaceRouter() {
       return <ProfileView influencer={influencer} />;
     case "references":
       return <UploadView influencer={influencer} />;
-    case "generate":
-      return <GenerateView influencer={influencer} />;
+    case "create":
+      return <CreateView influencer={influencer} />;
     case "analytics":
       return <AnalyticsView influencer={influencer} />;
     default:

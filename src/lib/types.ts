@@ -59,7 +59,61 @@ export type VideoStatus =
   | "ready"
   | "failed";
 
-export type WorkspaceView = "profile" | "references" | "generate" | "analytics";
+export type WorkspaceView = "profile" | "references" | "create" | "analytics";
+
+// ── Pipeline Types ──────────────────────────────────────────
+
+export type PipelineStep = 1 | 2 | 3 | 4 | 5;
+
+export type StepStatus =
+  | "empty"
+  | "generating"
+  | "selecting"
+  | "confirmed"
+  | "failed";
+
+export interface GeneratedFace {
+  id: string;
+  thumbnailDataUrl: string;
+  fullDataUrl?: string;
+}
+
+export interface ReferenceGrid {
+  id: string;
+  thumbnailDataUrl: string;
+  poses: GeneratedFace[];
+}
+
+export interface ReferenceVideo {
+  id: string;
+  thumbnailDataUrl: string;
+  fileName: string;
+  duration: number;
+  objectUrl?: string;
+}
+
+export interface CompositeResult {
+  id: string;
+  thumbnailDataUrl: string;
+}
+
+export interface AnimationResult {
+  id: string;
+  thumbnailDataUrl: string;
+  videoUrl?: string;
+  consistencyScore: number;
+}
+
+export interface PipelineState {
+  activeStep: PipelineStep;
+  steps: {
+    1: { status: StepStatus; options: GeneratedFace[]; selected: GeneratedFace | null };
+    2: { status: StepStatus; grid: ReferenceGrid | null; confirmed: boolean };
+    3: { status: StepStatus; video: ReferenceVideo | null };
+    4: { status: StepStatus; options: CompositeResult[]; selected: CompositeResult | null };
+    5: { status: StepStatus; result: AnimationResult | null; retryCount: number };
+  };
+}
 
 export interface RosterFolder {
   id: string;

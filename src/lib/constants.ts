@@ -52,12 +52,66 @@ export const REJECTION_REASONS = [
   "Heavy filter detected",
 ];
 
+/** @deprecated Replaced by per-step progress in the pipeline */
 export const GENERATION_STAGES = [
   { label: "Analyzing references...", targetProgress: 20, durationMs: 1500 },
   { label: "Generating keyframes...", targetProgress: 55, durationMs: 3000 },
   { label: "Animating sequence...", targetProgress: 85, durationMs: 4000 },
   { label: "Verifying consistency...", targetProgress: 100, durationMs: 1500 },
 ];
+
+export const PIPELINE_STEPS = [
+  {
+    step: 1,
+    label: "Face",
+    verb: "Generate",
+    title: "Generate a face",
+    description: "Create or upload the face that will appear in your video.",
+    uploadHint: "Upload a face photo",
+    uploadDetail: "Front-facing, well-lit, single person. JPG or PNG.",
+    acceptType: "image/*",
+  },
+  {
+    step: 2,
+    label: "Poses",
+    verb: "Generate",
+    title: "Generate pose grid",
+    description: "Create a 3\u00d73 grid of pose variants from your selected face.",
+    uploadHint: "Upload a pose sheet",
+    uploadDetail: "A grid image of 9 pose variants. JPG or PNG.",
+    acceptType: "image/*",
+  },
+  {
+    step: 3,
+    label: "Motion",
+    verb: "Select",
+    title: "Select a motion reference",
+    description: "Upload a video that defines the movement and timing.",
+    uploadHint: "Upload a reference video",
+    uploadDetail: "The video whose motion your character will follow. MP4, MOV, or WebM.",
+    acceptType: "video/*",
+  },
+  {
+    step: 4,
+    label: "Composite",
+    verb: "Generate",
+    title: "Generate composite",
+    description: "Swap the face onto the reference video\u2019s keyframe.",
+    uploadHint: "Upload a composite image",
+    uploadDetail: "A face-swapped still frame. JPG or PNG.",
+    acceptType: "image/*",
+  },
+  {
+    step: 5,
+    label: "Animate",
+    verb: "Generate",
+    title: "Animate the result",
+    description: "Bring the composite to life with motion from your reference video.",
+    uploadHint: "Upload a finished video",
+    uploadDetail: "A completed animation video. MP4 or WebM.",
+    acceptType: "video/*",
+  },
+] as const;
 
 export const FAILURE_REASONS = [
   "Consistency check failed — character drifted too far from reference",

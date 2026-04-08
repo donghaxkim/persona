@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const TABS: { value: WorkspaceView; label: string; icon: string }[] = [
   { value: "profile", label: "Posts", icon: "grid" },
   { value: "references", label: "References", icon: "refs" },
-  { value: "generate", label: "Generate", icon: "plus" },
+  { value: "create", label: "Create", icon: "wand" },
 ];
 
 function TabIcon({ type }: { type: string }) {
@@ -32,6 +32,14 @@ function TabIcon({ type }: { type: string }) {
         <rect x="3" y="3" width="18" height="18" rx="2" />
         <circle cx="8.5" cy="8.5" r="1.5" />
         <path d="M21 15l-5-5L5 21" />
+      </svg>
+    );
+  }
+  if (type === "wand") {
+    return (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline-block">
+        <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
+        <line x1="2" y1="22" x2="22" y2="2" />
       </svg>
     );
   }

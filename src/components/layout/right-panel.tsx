@@ -1,11 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { WorkspaceNav } from "../workspace/workspace-nav";
 import { WorkspaceRouter } from "../workspace/workspace-router";
+import { UploadView } from "../workspace/upload-view";
+import { CreateView } from "../create/create-view";
 import { PostDetail } from "../workspace/post-detail";
 import { usePersonaStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+// Each view gets its own scroll container, stacked absolutely.
+// Only the active one is visible. Scroll position is preserved per-view.
+function ScrollSlot({ visible, children }: { visible: boolean; children: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "absolute inset-0 overflow-y-auto",
+        visible ? "z-[1]" : "z-0 invisible"
+      )}
+      aria-hidden={!visible}
+    >
+      {children}
+    </div>
+  );
+}
 
 export function RightPanel() {
   const activeInfluencerId = usePersonaStore((s) => s.activeInfluencerId);
@@ -35,20 +53,27 @@ export function RightPanel() {
     );
   }
 
-  // All other views — persistent header + nav, content below
+  // All other views — fixed header + nav, each view has its own scroll
   return (
     <main className="flex-1 flex flex-col min-w-0 h-full">
-      <div className="flex-1 overflow-y-auto">
+      {/* Fixed header + nav — never scrolls, never shifts */}
+      <div className="flex-shrink-0">
         <div className="max-w-[600px] mx-auto">
           <ProfileHeader influencer={influencer} />
           <WorkspaceNav />
         </div>
-        <div className={activeView === "profile" ? "" : "hidden"}>
+      </div>
+      {/* Content area — each view is its own scroll container */}
+      <div className="flex-1 min-h-0 relative">
+        <ScrollSlot visible={activeView === "profile"}>
           <WorkspaceGridOnly influencer={influencer} />
-        </div>
-        <div className={activeView !== "profile" ? "" : "hidden"}>
-          <WorkspaceRouter />
-        </div>
+        </ScrollSlot>
+        <ScrollSlot visible={activeView === "references"}>
+          <UploadView influencer={influencer} />
+        </ScrollSlot>
+        <ScrollSlot visible={activeView === "create"}>
+          <CreateView influencer={influencer} />
+        </ScrollSlot>
       </div>
     </main>
   );
@@ -111,7 +136,7 @@ function WorkspaceGridOnly({ influencer }: { influencer: Influencer }) {
       <div className="max-w-[600px] mx-auto py-16 text-center">
         <p className="text-sm text-muted-foreground">No posts yet</p>
         <button
-          onClick={() => setActiveView("generate")}
+          onClick={() => setActiveView("create")}
           className="text-sm underline underline-offset-2 text-foreground mt-1 hover:opacity-70 transition-opacity duration-150"
         >
           Generate your first video →

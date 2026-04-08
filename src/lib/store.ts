@@ -8,6 +8,14 @@ import type {
   VideoStatus,
   RosterFolder,
   RosterItem,
+  PipelineState,
+  PipelineStep,
+  StepStatus,
+  GeneratedFace,
+  ReferenceGrid,
+  ReferenceVideo,
+  CompositeResult,
+  AnimationResult,
 } from "./types";
 
 interface ActiveGeneration {
@@ -17,6 +25,19 @@ interface ActiveGeneration {
   stageLabel: string;
 }
 
+function createEmptyPipeline(): PipelineState {
+  return {
+    activeStep: 1,
+    steps: {
+      1: { status: "empty", options: [], selected: null },
+      2: { status: "empty", grid: null, confirmed: false },
+      3: { status: "empty", video: null },
+      4: { status: "empty", options: [], selected: null },
+      5: { status: "empty", result: null, retryCount: 0 },
+    },
+  };
+}
+
 interface PersonaStore {
   influencers: Influencer[];
   rosterOrder: RosterItem[];
@@ -24,6 +45,23 @@ interface PersonaStore {
   activeInfluencerId: string | null;
   activeView: WorkspaceView;
   activeGeneration: ActiveGeneration | null;
+
+  // Pipeline (ephemeral, not persisted)
+  pipeline: PipelineState | null;
+  initPipeline: () => void;
+  clearPipeline: () => void;
+  setActiveStep: (step: PipelineStep) => void;
+  updateStepStatus: (step: PipelineStep, status: StepStatus) => void;
+  setStepOptions: (step: 1, options: GeneratedFace[]) => void;
+  selectFace: (face: GeneratedFace) => void;
+  setReferenceGrid: (grid: ReferenceGrid) => void;
+  confirmGrid: () => void;
+  setReferenceVideo: (video: ReferenceVideo) => void;
+  setCompositeOptions: (options: CompositeResult[]) => void;
+  selectComposite: (composite: CompositeResult) => void;
+  setAnimationResult: (result: AnimationResult) => void;
+  goToStep: (step: PipelineStep) => void;
+  injectAsset: (step: PipelineStep, asset: File) => void;
 
   createInfluencer: (id: string, name: string, niche: string) => void;
   deleteInfluencer: (id: string) => void;
@@ -72,6 +110,137 @@ export const usePersonaStore = create<PersonaStore>()(
       activeInfluencerId: null,
       activeView: "profile",
       activeGeneration: null,
+      pipeline: null,
+
+      // ── Pipeline actions ────────────────────────────────────
+      initPipeline: () => set({ pipeline: createEmptyPipeline() }),
+      clearPipeline: () => set({ pipeline: null }),
+
+      setActiveStep: (step) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          return { pipeline: { ...state.pipeline, activeStep: step } };
+        }),
+
+      updateStepStatus: (step, status) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (steps as any)[step] = { ...(steps as any)[step], status };
+          return { pipeline: { ...state.pipeline, steps } };
+        }),
+
+      setStepOptions: (_step, options) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[1] = { ...steps[1], options, status: "selecting" };
+          return { pipeline: { ...state.pipeline, steps } };
+        }),
+
+      selectFace: (face) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[1] = { ...steps[1], selected: face, status: "confirmed" };
+          return { pipeline: { ...state.pipeline, steps, activeStep: 2 } };
+        }),
+
+      setReferenceGrid: (grid) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[2] = { ...steps[2], grid, status: "selecting" };
+          return { pipeline: { ...state.pipeline, steps } };
+        }),
+
+      confirmGrid: () =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[2] = { ...steps[2], confirmed: true, status: "confirmed" };
+          return { pipeline: { ...state.pipeline, steps, activeStep: 3 } };
+        }),
+
+      setReferenceVideo: (video) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[3] = { ...steps[3], video, status: "confirmed" };
+          return { pipeline: { ...state.pipeline, steps, activeStep: 4 } };
+        }),
+
+      setCompositeOptions: (options) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[4] = { ...steps[4], options, status: "selecting" };
+          return { pipeline: { ...state.pipeline, steps } };
+        }),
+
+      selectComposite: (composite) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[4] = { ...steps[4], selected: composite, status: "confirmed" };
+          return { pipeline: { ...state.pipeline, steps, activeStep: 5 } };
+        }),
+
+      setAnimationResult: (result) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          steps[5] = { ...steps[5], result, status: "confirmed" };
+          return { pipeline: { ...state.pipeline, steps } };
+        }),
+
+      goToStep: (step) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const current = state.pipeline.activeStep;
+          // Going forward: only if current step is confirmed
+          if (step > current && state.pipeline.steps[current].status !== "confirmed") {
+            return state;
+          }
+          const steps = { ...state.pipeline.steps };
+          // Going backward: reset all downstream steps
+          if (step < current) {
+            for (let s = step + 1; s <= 5; s++) {
+              const k = s as PipelineStep;
+              if (k === 1) steps[1] = { status: "empty", options: [], selected: null };
+              else if (k === 2) steps[2] = { status: "empty", grid: null, confirmed: false };
+              else if (k === 3) steps[3] = { status: "empty", video: null };
+              else if (k === 4) steps[4] = { status: "empty", options: [], selected: null };
+              else if (k === 5) steps[5] = { status: "empty", result: null, retryCount: 0 };
+            }
+          }
+          return { pipeline: { ...state.pipeline, steps, activeStep: step } };
+        }),
+
+      injectAsset: (step, _asset) =>
+        set((state) => {
+          if (!state.pipeline) return state;
+          const steps = { ...state.pipeline.steps };
+          // Mark steps before as confirmed with placeholder data
+          for (let s = 1; s < step; s++) {
+            const k = s as PipelineStep;
+            if (steps[k].status !== "confirmed") {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (steps as any)[k] = { ...(steps as any)[k], status: "confirmed" };
+            }
+          }
+          // Reset steps after
+          for (let s = step + 1; s <= 5; s++) {
+            const k = s as PipelineStep;
+            if (k === 1) steps[1] = { status: "empty", options: [], selected: null };
+            else if (k === 2) steps[2] = { status: "empty", grid: null, confirmed: false };
+            else if (k === 3) steps[3] = { status: "empty", video: null };
+            else if (k === 4) steps[4] = { status: "empty", options: [], selected: null };
+            else if (k === 5) steps[5] = { status: "empty", result: null, retryCount: 0 };
+          }
+          return { pipeline: { ...state.pipeline, steps, activeStep: step } };
+        }),
 
       createInfluencer: (id, name, niche) => {
         const hues = [340, 210, 140, 30, 270, 180];
@@ -122,7 +291,7 @@ export const usePersonaStore = create<PersonaStore>()(
         })),
 
       setActiveInfluencer: (id) =>
-        set({ activeInfluencerId: id, activeView: "profile" }),
+        set({ activeInfluencerId: id, activeView: "profile", pipeline: null }),
 
       setActiveView: (view) => set({ activeView: view }),
 
