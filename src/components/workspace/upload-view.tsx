@@ -3,9 +3,8 @@
 import { useCallback, useRef, useState } from "react";
 import type { Influencer } from "@/lib/types";
 import { usePersonaStore } from "@/lib/store";
-import { generateId, cn } from "@/lib/utils";
-import { resizeImage, saveImageBlob } from "@/lib/storage";
-import { simulateValidation } from "@/lib/mock-validation";
+import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
 import { ANGLES, EXPRESSIONS } from "@/lib/constants";
 
 interface UploadViewProps {
@@ -14,7 +13,6 @@ interface UploadViewProps {
 
 export function UploadView({ influencer }: UploadViewProps) {
   const addReferenceImage = usePersonaStore((s) => s.addReferenceImage);
-  const updateImageStatus = usePersonaStore((s) => s.updateImageStatus);
   const removeReferenceImage = usePersonaStore((s) => s.removeReferenceImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCoverage, setShowCoverage] = useState(false);
@@ -38,53 +36,27 @@ export function UploadView({ influencer }: UploadViewProps) {
 
   const processFiles = useCallback(
     async (files: FileList | File[]) => {
-      const fileArray = Array.from(files).filter((f) =>
-        f.type.startsWith("image/")
-      );
-
+      const fileArray = Array.from(files).filter((f) => f.type.startsWith("image/"));
       for (const file of fileArray) {
-        const imageId = generateId();
-
         try {
-          const [medium, thumb] = await Promise.all([
-            resizeImage(file, 800),
-            resizeImage(file, 200),
-          ]);
-
-          await saveImageBlob(imageId, medium.blob);
-
+          const result = await api.references.upload(influencer.id, file);
           addReferenceImage(influencer.id, {
-            id: imageId,
+            id: result.id,
             influencerId: influencer.id,
-            thumbnailDataUrl: thumb.dataUrl,
-            angle: "front",
-            expression: "neutral",
-            framing: "close-up",
-            status: "pending",
-            createdAt: new Date().toISOString(),
+            thumbnailDataUrl: result.thumbnailUrl || "",
+            angle: result.angle,
+            expression: result.expression,
+            framing: result.framing,
+            status: result.status,
+            rejectionReason: result.rejection_reason,
+            createdAt: result.created_at,
           });
-
-          simulateValidation().then((result) => {
-            updateImageStatus(
-              influencer.id,
-              imageId,
-              result.status,
-              result.rejectionReason,
-              result.status === "accepted"
-                ? {
-                    angle: result.angle,
-                    expression: result.expression,
-                    framing: result.framing,
-                  }
-                : undefined
-            );
-          });
-        } catch {
-          // Skip files that fail to process
+        } catch (err) {
+          console.error("Upload failed:", err);
         }
       }
     },
-    [influencer.id, addReferenceImage, updateImageStatus]
+    [influencer.id, addReferenceImage]
   );
 
   return (
