@@ -1,11 +1,11 @@
 "use client";
 
 import { usePersonaStore } from "@/lib/store";
-import { EmptyState } from "./empty-state";
 import { ProfileView } from "./profile-view";
 import { UploadView } from "./upload-view";
 import { CreateView } from "../create/create-view";
 import { AnalyticsView } from "./analytics-view";
+import { PortfolioDashboard } from "./portfolio-dashboard";
 
 export function WorkspaceRouter() {
   const activeInfluencerId = usePersonaStore((s) => s.activeInfluencerId);
@@ -15,7 +15,7 @@ export function WorkspaceRouter() {
   );
 
   if (!activeInfluencerId || !influencer) {
-    return <EmptyState />;
+    return <PortfolioDashboard />;
   }
 
   switch (activeView) {
