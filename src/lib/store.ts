@@ -91,6 +91,13 @@ interface PersonaStore {
   ) => void;
   deleteVideo: (influencerId: string, videoId: string) => void;
   setActiveGeneration: (gen: ActiveGeneration | null) => void;
+
+  // Pipeline API actions (async, wired to backend)
+  startPipelineRun: (influencerId: string, prompt: string, template: string, duration: number, resolution: string) => Promise<{ runId: string; videoId: string } | null>;
+  advancePipelineStep: (runId: string, inputs: Record<string, any>) => Promise<any>;
+  pollPipelineStatus: (runId: string) => Promise<any>;
+  retryPipelineStep: (runId: string) => Promise<any>;
+  abandonPipeline: (runId: string) => Promise<void>;
 }
 
 export const usePersonaStore = create<PersonaStore>()((set) => ({
@@ -461,4 +468,51 @@ export const usePersonaStore = create<PersonaStore>()((set) => ({
         })),
 
       setActiveGeneration: (gen) => set({ activeGeneration: gen }),
+
+      // Pipeline API actions
+      startPipelineRun: async (influencerId, prompt, template, duration, resolution) => {
+        try {
+          const result = await api.pipeline.create(influencerId, prompt, template, duration, resolution);
+          return result;
+        } catch (err) {
+          console.error("Failed to start pipeline:", err);
+          return null;
+        }
+      },
+
+      advancePipelineStep: async (runId, inputs) => {
+        try {
+          return await api.pipeline.advance(runId, inputs);
+        } catch (err) {
+          console.error("Failed to advance step:", err);
+          throw err;
+        }
+      },
+
+      pollPipelineStatus: async (runId) => {
+        try {
+          return await api.pipeline.status(runId);
+        } catch (err) {
+          console.error("Failed to poll pipeline:", err);
+          throw err;
+        }
+      },
+
+      retryPipelineStep: async (runId) => {
+        try {
+          return await api.pipeline.retry(runId);
+        } catch (err) {
+          console.error("Failed to retry:", err);
+          throw err;
+        }
+      },
+
+      abandonPipeline: async (runId) => {
+        try {
+          await api.pipeline.abandon(runId);
+          set({ pipeline: null });
+        } catch (err) {
+          console.error("Failed to abandon pipeline:", err);
+        }
+      },
     }));

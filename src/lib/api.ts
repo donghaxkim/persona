@@ -48,4 +48,28 @@ export const api = {
         body: JSON.stringify({ order_data: orderData, folders, last_updated_at: lastUpdatedAt }),
       }),
   },
+  pipeline: {
+    create: (influencerId: string, prompt: string, template: string, duration: number, resolution: string) =>
+      fetchAPI<{ runId: string; videoId: string }>("/api/pipeline", {
+        method: "POST",
+        body: JSON.stringify({ influencerId, prompt, template, duration, resolution }),
+      }),
+    status: (runId: string) =>
+      fetchAPI<any>(`/api/pipeline/${runId}`),
+    listActive: (influencerId: string) =>
+      fetchAPI<any[]>(`/api/pipeline?influencerId=${influencerId}&status=active`),
+    advance: (runId: string, body: Record<string, any>) =>
+      fetchAPI<any>(`/api/pipeline/${runId}/advance`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    retry: (runId: string) =>
+      fetchAPI<any>(`/api/pipeline/${runId}/retry`, {
+        method: "PATCH",
+      }),
+    abandon: (runId: string) =>
+      fetchAPI<any>(`/api/pipeline/${runId}`, {
+        method: "DELETE",
+      }),
+  },
 };
