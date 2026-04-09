@@ -30,7 +30,7 @@ function createEmptyPipeline(): PipelineState {
       1: { status: "empty", video: null },
       2: { status: "empty", options: [], selected: null },
       3: { status: "empty", result: null, retryCount: 0 },
-    },
+    } as any,
   };
 }
 
@@ -132,7 +132,7 @@ export const usePersonaStore = create<PersonaStore>()((set) => ({
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[1] = { ...steps[1], video, status: "confirmed" };
+          (steps as any)[1] = { ...steps[1], video, status: "confirmed" };
           return { pipeline: { ...state.pipeline, steps, activeStep: 2 } };
         }),
 
@@ -140,7 +140,7 @@ export const usePersonaStore = create<PersonaStore>()((set) => ({
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[2] = { ...steps[2], options, status: "selecting" };
+          (steps as any)[2] = { ...steps[2], options, status: "selecting" };
           return { pipeline: { ...state.pipeline, steps } };
         }),
 
@@ -148,7 +148,7 @@ export const usePersonaStore = create<PersonaStore>()((set) => ({
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[2] = { ...steps[2], selected: composite, status: "confirmed" };
+          (steps as any)[2] = { ...steps[2], selected: composite, status: "confirmed" };
           return { pipeline: { ...state.pipeline, steps, activeStep: 3 } };
         }),
 
@@ -156,7 +156,7 @@ export const usePersonaStore = create<PersonaStore>()((set) => ({
         set((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[3] = { ...steps[3], result, status: "confirmed" };
+          (steps as any)[3] = { ...steps[3], result, status: "confirmed" };
           return { pipeline: { ...state.pipeline, steps } };
         }),
 
@@ -171,9 +171,9 @@ export const usePersonaStore = create<PersonaStore>()((set) => ({
           if (step < current) {
             for (let s = step + 1; s <= 3; s++) {
               const k = s as PipelineStep;
-              if (k === 1) steps[1] = { status: "empty", video: null };
-              else if (k === 2) steps[2] = { status: "empty", options: [], selected: null };
-              else if (k === 3) steps[3] = { status: "empty", result: null, retryCount: 0 };
+              if (k === 1) (steps as any)[1] = { status: "empty", video: null };
+              else if (k === 2) (steps as any)[2] = { status: "empty", options: [], selected: null };
+              else if (k === 3) (steps as any)[3] = { status: "empty", result: null, retryCount: 0 };
             }
           }
           return { pipeline: { ...state.pipeline, steps, activeStep: step } };
@@ -192,9 +192,9 @@ export const usePersonaStore = create<PersonaStore>()((set) => ({
           }
           for (let s = step + 1; s <= 3; s++) {
             const k = s as PipelineStep;
-            if (k === 1) steps[1] = { status: "empty", video: null };
-            else if (k === 2) steps[2] = { status: "empty", options: [], selected: null };
-            else if (k === 3) steps[3] = { status: "empty", result: null, retryCount: 0 };
+            if (k === 1) (steps as any)[1] = { status: "empty", video: null };
+            else if (k === 2) (steps as any)[2] = { status: "empty", options: [], selected: null };
+            else if (k === 3) (steps as any)[3] = { status: "empty", result: null, retryCount: 0 };
           }
           return { pipeline: { ...state.pipeline, steps, activeStep: step } };
         }),

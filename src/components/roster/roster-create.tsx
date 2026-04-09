@@ -48,13 +48,13 @@ export function RosterCreate({ expanded, onExpand }: RosterCreateProps) {
     if (e.key === "Escape") handleCancel();
   };
 
-  // Collapsed — plain + icon, no circle
+  // Collapsed — plain + icon, aligned to same w-[54px] center as expanded
   if (!expanded) {
     return (
-      <div className="flex items-center justify-center h-11">
+      <div className="flex items-center h-11">
         <button
           onClick={handleOpen}
-          className="w-9 h-9 flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors duration-400"
+          className="w-[54px] flex-shrink-0 flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors duration-400"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -70,7 +70,7 @@ export function RosterCreate({ expanded, onExpand }: RosterCreateProps) {
     return (
       <button
         onClick={handleOpen}
-        className="w-full h-11 flex items-center px-2 rounded-md hover:bg-accent/50 transition-all duration-400 group"
+        className="w-full h-11 flex items-center rounded-md hover:bg-accent/50 transition-all duration-400 group"
       >
         <div className="w-[54px] flex-shrink-0 flex items-center justify-center text-muted-foreground/40 group-hover:text-muted-foreground transition-colors duration-400">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">

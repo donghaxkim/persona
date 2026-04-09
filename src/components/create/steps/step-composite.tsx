@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePersonaStore } from "@/lib/store";
-import { realComposite as simulateComposite } from "@/lib/real-pipeline";
+import { simulateComposite } from "@/lib/mock-pipeline";
 import type { CompositeResult, Influencer } from "@/lib/types";
 import { StepShell } from "../step-shell";
 import { StepControls } from "../step-controls";
@@ -33,8 +33,8 @@ export function StepComposite({ influencer }: StepCompositeProps) {
     [influencer.referenceImages]
   );
   const faceRef = acceptedRefs[0] ?? null;
-  const keyframe = pipeline?.steps[1].video;
-  const step2 = pipeline?.steps[2];
+  const keyframe = (pipeline?.steps[1] as any)?.video;
+  const step2 = pipeline?.steps[2] as any;
   const options = step2?.options ?? [];
   const isGenerating = step2?.status === "generating";
 
@@ -46,7 +46,7 @@ export function StepComposite({ influencer }: StepCompositeProps) {
     updateStepStatus(2, "generating");
     try {
       const face = { id: faceRef.id, thumbnailDataUrl: faceRef.thumbnailDataUrl };
-      const results = await simulateComposite(face, keyframe, (p, pct) => {
+      const results = await simulateComposite(face, keyframe, (p: string, pct: number) => {
         setPhase(p);
         setProgress(pct);
       });
@@ -124,7 +124,7 @@ export function StepComposite({ influencer }: StepCompositeProps) {
             Select a composite
           </p>
           <div className="grid grid-cols-3 gap-2.5">
-            {options.map((comp) => (
+            {options.map((comp: CompositeResult) => (
               <button
                 key={comp.id}
                 onClick={() => handleTapComposite(comp)}

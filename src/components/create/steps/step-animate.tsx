@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Influencer } from "@/lib/types";
 import { usePersonaStore } from "@/lib/store";
-import { realAnimate as simulateAnimate } from "@/lib/real-pipeline";
+import { simulateAnimate } from "@/lib/mock-pipeline";
 import { generateId } from "@/lib/utils";
 import { StepShell } from "../step-shell";
 import { StepControls } from "../step-controls";
@@ -32,9 +32,9 @@ export function StepAnimate({ influencer }: StepAnimateProps) {
   const [showCompletion, setShowCompletion] = useState(false);
   const retryCountRef = useRef(0);
 
-  const composite = pipeline?.steps[2].selected;
-  const video = pipeline?.steps[1].video;
-  const step3 = pipeline?.steps[3];
+  const composite = (pipeline?.steps[2] as any)?.selected;
+  const video = (pipeline?.steps[1] as any)?.video;
+  const step3 = pipeline?.steps[3] as any;
   const result = step3?.result;
   const isGenerating = step3?.status === "generating";
 
@@ -44,7 +44,7 @@ export function StepAnimate({ influencer }: StepAnimateProps) {
     setProgress(0);
     updateStepStatus(3, "generating");
     try {
-      const result = await simulateAnimate(composite, video, (p, pct) => {
+      const result = await simulateAnimate(composite, video, (p: string, pct: number) => {
         setPhase(p);
         setProgress(pct);
       });

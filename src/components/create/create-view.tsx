@@ -3,7 +3,6 @@
 import { useState, useCallback, useMemo } from "react";
 import type { Influencer, PipelineStep } from "@/lib/types";
 import { usePersonaStore } from "@/lib/store";
-import { createPipelineRun } from "@/lib/real-pipeline";
 import { ProgressRail } from "./progress-rail";
 import { StepTransition } from "./step-transition";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -81,15 +80,7 @@ export function CreateView({ influencer }: CreateViewProps) {
                 Upload a motion video to get started.
               </p>
               <button
-                onClick={async () => {
-                  initPipeline();
-                  // Also create server-side pipeline run
-                  try {
-                    await createPipelineRun(influencer.id);
-                  } catch (err) {
-                    console.error("Failed to create pipeline run:", err);
-                  }
-                }}
+                onClick={initPipeline}
                 className="mt-5 w-full py-2.5 rounded-xl bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity duration-500"
               >
                 Select a motion video

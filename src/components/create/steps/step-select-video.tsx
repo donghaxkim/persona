@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { usePersonaStore } from "@/lib/store";
-import { extractVideoKeyframe } from "@/lib/real-pipeline";
+import { extractVideoKeyframe } from "@/lib/mock-pipeline";
 import { TEMPLATES } from "@/lib/constants";
 import { StepShell } from "../step-shell";
 import { StepControls } from "../step-controls";
@@ -21,7 +21,7 @@ export function StepSelectVideo() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const step1 = pipeline?.steps[1];
+  const step1 = pipeline?.steps[1] as any;
   const video = step1?.video;
 
   const handleFile = useCallback(
@@ -34,7 +34,7 @@ export function StepSelectVideo() {
         usePersonaStore.setState((state) => {
           if (!state.pipeline) return state;
           const steps = { ...state.pipeline.steps };
-          steps[1] = { ...steps[1], video: result, status: "selecting" };
+          (steps as any)[1] = { ...steps[1], video: result, status: "selecting" };
           return { pipeline: { ...state.pipeline, steps } };
         });
       } catch (err) {

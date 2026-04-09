@@ -127,16 +127,25 @@ export function LeftPanel() {
         hovered ? "w-64" : "w-16"
       )}
     >
-      {/* Wordmark */}
-      <div className="h-14 flex items-center px-[14px] flex-shrink-0">
-        <span className={cn(
-          "text-lg font-medium tracking-tight text-foreground whitespace-nowrap select-none transition-opacity duration-150",
-          hovered ? "opacity-100" : "opacity-0"
-        )}>persona</span>
-        <span className={cn(
-          "text-sm font-semibold tracking-wider text-muted-foreground select-none absolute left-0 w-16 text-center transition-opacity duration-150",
-          hovered ? "opacity-0" : "opacity-100"
-        )}>p</span>
+      {/* Dashboard button */}
+      <div className="h-14 flex items-center flex-shrink-0 px-[5px]">
+        <button
+          onClick={() => setActiveInfluencer(null)}
+          className="w-full flex items-center h-11 rounded-md hover:bg-accent/50 transition-colors duration-150"
+        >
+          <div className="w-[54px] flex-shrink-0 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+              <rect x="3" y="3" width="8" height="8" rx="1.5" />
+              <rect x="13" y="3" width="8" height="8" rx="1.5" />
+              <rect x="3" y="13" width="8" height="8" rx="1.5" />
+              <rect x="13" y="13" width="8" height="8" rx="1.5" />
+            </svg>
+          </div>
+          <span className={cn(
+            "text-sm text-muted-foreground whitespace-nowrap transition-opacity duration-150",
+            hovered ? "opacity-100" : "opacity-0"
+          )}>Dashboard</span>
+        </button>
       </div>
 
       {/* Search */}

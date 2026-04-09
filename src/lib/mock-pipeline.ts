@@ -8,6 +8,8 @@ import type {
 } from "./types";
 import { VIDEO_GRADIENTS } from "./constants";
 
+export type PhaseCallback = (phase: string, progress: number) => void;
+
 function randomDelay(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
@@ -109,7 +111,8 @@ export async function extractVideoKeyframe(file: File): Promise<ReferenceVideo> 
 
 export async function simulateComposite(
   _face: GeneratedFace,
-  _keyframe: ReferenceVideo
+  _keyframe: ReferenceVideo,
+  onPhase?: PhaseCallback
 ): Promise<CompositeResult[]> {
   const delay = randomDelay(3000, 5000);
   await new Promise((r) => setTimeout(r, delay));
@@ -127,7 +130,8 @@ export async function simulateComposite(
 
 export async function simulateAnimate(
   _composite: CompositeResult,
-  _video: ReferenceVideo
+  _video: ReferenceVideo,
+  onPhase?: PhaseCallback
 ): Promise<AnimationResult> {
   const delay = randomDelay(6000, 10000);
   await new Promise((r) => setTimeout(r, delay));
